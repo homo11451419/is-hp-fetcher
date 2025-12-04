@@ -1,0 +1,30 @@
+name: Fetch is_hp summary
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 */3 * * *'
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci || npm i
+      - run: npx playwright install --with-deps chromium
+      - run: npm run fetch
+      - name: Commit and push changes
+        run: |
+          if git diff --quiet HEAD -- is_hp.json; then
+            echo "No changes to commit"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add is_hp.json
+            git commit -m "chore: update is_hp.json"
+            git push
+          fi

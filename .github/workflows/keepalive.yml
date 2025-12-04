@@ -1,0 +1,32 @@
+name: Keepalive
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check if keepalive needed
+        id: chk
+        run: |
+          LAST=$(git log --since="50 days ago" --grep="keepalive" -n 1 --pretty=tformat:"%H")
+          if [ -n "$LAST" ]; then
+            echo "need=false" >> $GITHUB_OUTPUT
+          else
+            echo "need=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Commit keepalive
+        if: steps.chk.outputs.need == 'true'
+        run: |
+          date -u +%Y-%m-%dT%H:%M:%SZ > .github/KEEPALIVE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/KEEPALIVE
+          git commit -m "chore: keepalive"
+          git push
