@@ -18,11 +18,14 @@ jobs:
       - run: npm run fetch
       - name: Commit and push changes
         run: |
-          if git diff --quiet HEAD -- is_hp.json; then
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Prime diff to notice untracked file changes
+          git add -N is_hp.json || true
+          if git diff --quiet --exit-code -- is_hp.json; then
             echo "No changes to commit"
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add is_hp.json
             git commit -m "chore: update is_hp.json"
             git push
